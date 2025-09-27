@@ -1,8 +1,12 @@
+
 defmodule InstallWeb.UserController do
   use InstallWeb, :controller
   alias Install.User
   alias Install.Repo
+  alias Install.Token
   alias Pbkdf2
+
+  def init(default), do: default
 
   def signup(conn, params) do
     user_params = Map.take(params, ["email", "password_input", "name"])
@@ -21,20 +25,24 @@ defmodule InstallWeb.UserController do
     end
   end
 
-  def login(conn, params) do
-    user_params = Map.take(params, ["email", "password"])
-    user = Repo.get_by(User, email: user_params["email"])
-
-    cond do
-      user && Pbkdf2.verify_pass(user_params["password"], user.password) ->
-        conn
-        |> put_status(:ok)
-        |> json(%{message: "Login successful", user_id: user.id})
-
-      true ->
+  def login(conn, %{"email" => email, "password" => password}) do
+    case Repo.get_by(User, email: email) do
+      nil ->
         conn
         |> put_status(:unauthorized)
         |> json(%{error: "Invalid email or password"})
+
+      user ->
+        if Pbkdf2.verify_pass(password, user.password) do
+          {:ok, token} = Token.generate_and_sign(%{"user_id" => user.id})
+          conn
+          |> put_status(:ok)
+          |> json(%{message: "Login successful", token: token})
+        else
+          conn
+          |> put_status(:unauthorized)
+          |> json(%{error: "Invalid email or password"})
+        end
     end
   end
 
@@ -42,7 +50,7 @@ defmodule InstallWeb.UserController do
     user = Repo.get!(User, id)
 
     case Repo.delete(user) do
-      {:ok, struct} -> json(conn, %{message: "User deleted Successfully"})
+      {:ok, _struct} -> json(conn, %{message: "User deleted Successfully"})
       {:error, changeset} -> json(conn, %{error: changeset})
     end
   end

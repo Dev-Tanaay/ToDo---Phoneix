@@ -14,12 +14,23 @@ defmodule InstallWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", InstallWeb do
+  pipeline :api_auth do
+    plug :accepts, ["json"]
+    plug InstallWeb.Plug.Authenticate
+  end
+
+  scope "/users", InstallWeb do
     pipe_through :api
 
-    post "/users/signup", UserController, :signup
-    post "/users/login", UserController, :login
-    post "/users/delete/:id", UserController, :delete
+    post "/signup", UserController, :signup
+    post "/login", UserController, :login
+    post "/delete/:id", UserController, :delete
+  end
+
+  scope "/task", InstallWeb do
+    pipe_through [:api , :api_auth]
+
+    get "/list", TaskController, :list
   end
 
   # Other scopes may use custom stacks.
