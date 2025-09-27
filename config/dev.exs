@@ -3,9 +3,9 @@ import Config
 # Configure your database
 config :install, Install.Repo,
   username: "postgres",
-  password: "postgres",
+  password: "tanay",
   hostname: "localhost",
-  database: "install_dev",
+  database: "todo",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

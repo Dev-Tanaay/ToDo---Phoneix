@@ -15,9 +15,11 @@ defmodule InstallWeb.Router do
   end
 
   scope "/", InstallWeb do
-    pipe_through :browser
+    pipe_through :api
 
-    get "/", PageController, :index
+    post "/users/signup", UserController, :signup
+    post "/users/login", UserController, :login
+    post "/users/delete/:id", UserController, :delete
   end
 
   # Other scopes may use custom stacks.
